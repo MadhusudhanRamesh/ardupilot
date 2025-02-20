@@ -20,6 +20,7 @@ public:
     static AP_Arming *get_singleton();
 
     void update();
+    bool lockStatus=false;
 
     enum ArmingChecks {
         ARMING_CHECK_ALL         = (1U << 0),
@@ -151,6 +152,7 @@ public:
     }
 
     void send_arm_disarm_statustext(const char *string) const;
+    void update_locking_status(bool updateLockStatus);
 
     static bool method_is_GCS(Method method) {
         return (method == Method::MAVLINK || method == Method::DDS);

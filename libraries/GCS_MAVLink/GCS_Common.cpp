@@ -4757,6 +4757,37 @@ MAV_RESULT GCS_MAVLINK::handle_command_run_prearm_checks(const mavlink_command_i
 }
 #endif  // AP_ARMING_ENABLED
 
+MAV_RESULT GCS_MAVLINK::handle_lock_command_checks(const mavlink_command_int_t &packet)
+{
+    gcs().send_text(MAV_SEVERITY_NOTICE, "Locking working");
+    // param1 : lock 1: unlock 0 lock
+
+    // AP_Arming::update_locking_status();
+
+    if ((uint8_t) packet.param1 == 1) {
+        (void)AP::arming().update_locking_status(true);
+        gcs().send_text(MAV_SEVERITY_NOTICE, "Unlocked");
+    } else {
+        (void)AP::arming().update_locking_status(false);
+        gcs().send_text(MAV_SEVERITY_NOTICE, "Locked");
+    }
+    return MAV_RESULT_ACCEPTED;
+}
+
+MAV_RESULT GCS_MAVLINK::handle_tap_coord(const mavlink_command_int_t &packet)
+{
+    gcs().send_text(MAV_SEVERITY_NOTICE, "target selected");
+    float x = ((float) packet.param1);
+    float y = ((float) packet.param2);
+    int screenX = ((int) packet.param3);
+    int screenY = ((int) packet.param4);
+    int parentWidth = ((int) packet.x);
+    int parentHeight = ((int) packet.y);
+    gcs().send_text(MAV_SEVERITY_INFO, "taped on x = %f y = %f  screenX = %d screenY = %d parentWidth = %d parentHeight = %d", x, y, screenX, screenY, parentWidth, parentHeight);
+
+    return MAV_RESULT_ACCEPTED;
+}
+
 #if AP_MISSION_ENABLED
 // changes the current waypoint; at time of writing GCS
 // implementations use the mavlink message MISSION_SET_CURRENT to set
@@ -5475,7 +5506,10 @@ MAV_RESULT GCS_MAVLINK::handle_command_int_packet(const mavlink_command_int_t &p
         const Location zero_loc;
         return handle_command_do_set_roi(zero_loc);
     }
-
+    case MAV_CMD_SEND_TAP_COORD:{
+        gcs().send_text(MAV_SEVERITY_NOTICE, "recived tap points");
+        return handle_tap_coord(packet);
+    }
     case MAV_CMD_DO_SET_ROI:
     case MAV_CMD_DO_SET_ROI_LOCATION:
         return handle_command_do_set_roi(packet);
@@ -5564,6 +5598,11 @@ MAV_RESULT GCS_MAVLINK::handle_command_int_packet(const mavlink_command_int_t &p
 #if AP_ARMING_ENABLED
     case MAV_CMD_RUN_PREARM_CHECKS:
         return handle_command_run_prearm_checks(packet);
+
+    case MAV_CMD_LOCK_STATUS:
+        gcs().send_text(MAV_SEVERITY_DEBUG, "Sending locking status");
+        return handle_lock_command_checks(packet);
+
 #endif
 
 #if AP_SCRIPTING_ENABLED

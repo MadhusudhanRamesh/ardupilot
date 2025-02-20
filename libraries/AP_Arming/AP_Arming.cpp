@@ -1556,6 +1556,10 @@ bool AP_Arming::serial_protocol_checks(bool display_failure)
     return true;
 }
 
+void AP_Arming::update_locking_status(bool updateLockStatus){
+    lockStatus=updateLockStatus;
+}
+
 //Check for estop
 bool AP_Arming::estop_checks(bool display_failure)
 {
